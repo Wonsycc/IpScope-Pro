@@ -1,0 +1,213 @@
+<UserControl x:Class="IpScopePro.Views.ProbeCardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:IpScopePro.Converters"
+             SizeChanged="OnSizeChanged">
+
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis" />
+        <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis" />
+        <converters:DateTimeFormatConverter x:Key="DateTimeFmt" />
+        <converters:DoubleFormatConverter x:Key="DoubleFmt" />
+        <converters:InverseBoolConverter x:Key="InverseBool" />
+    </UserControl.Resources>
+
+    <Border Background="{Binding BackgroundColor}"
+            BorderBrush="{DynamicResource CardBorderColor}" BorderThickness="1" CornerRadius="8">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.18" Color="Black" />
+        </Border.Effect>
+        <Grid x:Name="LayoutRoot">
+            <Grid.RowDefinitions>
+                <RowDefinition x:Name="HeaderRow" Height="30" />
+                <RowDefinition x:Name="HistoryRow" Height="*" />
+                <RowDefinition x:Name="StatsRow" Height="22" />
+                <RowDefinition x:Name="InputRow" Height="35" />
+            </Grid.RowDefinitions>
+
+            <!-- Top highlight -->
+            <Rectangle Grid.Row="0" Height="15" VerticalAlignment="Top"
+                       IsHitTestVisible="False">
+                <Rectangle.Fill>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#18FFFFFF" Offset="0" />
+                        <GradientStop Color="#00FFFFFF" Offset="1" />
+                    </LinearGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+
+            <!-- Header bar -->
+            <Border Grid.Row="0" Background="{DynamicResource CardHeaderBg}" Padding="4,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0" Width="20" Height="20"
+                            Foreground="{DynamicResource CardTextMuted}" FontSize="10" FontWeight="Bold"
+                            Command="{Binding ToggleMaximizeCommand}" Padding="0"
+                            Background="Transparent" BorderThickness="0" Cursor="Hand">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Content" Value="⛶" />
+                                <Setter Property="ToolTip" Value="{converters:Translate Key=MaximizeProbe}" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="border" Background="Transparent" BorderThickness="0"
+                                                    CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource HoverOverlay}" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsMaximized}" Value="True">
+                                        <Setter Property="Content" Value="▬" />
+                                        <Setter Property="ToolTip" Value="{converters:Translate Key=RestoreProbe}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <Viewbox Grid.Column="1" Stretch="Uniform" StretchDirection="DownOnly" Margin="2,0">
+                        <TextBlock Text="{Binding DisplayName}" FontSize="14"
+                                   FontWeight="Bold" Foreground="{Binding IpTextColor}"
+                                   TextAlignment="Center"
+                                   FontFamily="Segoe UI" />
+                    </Viewbox>
+
+                    <Button Grid.Column="2" Content="✕" ToolTip="{converters:Translate Key=Remove}" Width="20" Height="20"
+                            Foreground="{DynamicResource CardTextMuted}" FontSize="10" FontWeight="Bold"
+                            Click="RemoveProbe_Click" Padding="0"
+                            Background="Transparent" BorderThickness="0" Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="border" Background="Transparent" BorderThickness="0"
+                                        CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="border" Property="Background" Value="{DynamicResource HoverOverlay}" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- History List -->
+            <ListBox x:Name="HistorySection" Grid.Row="1" ItemsSource="{Binding History}"
+                     Background="{DynamicResource CardHeaderBg}" BorderThickness="0"
+                     Foreground="{Binding StatsColor}" FontSize="10"
+                     FontFamily="Consolas" Padding="4,2"
+                     VerticalAlignment="Stretch">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock FontFamily="Consolas" FontSize="10"
+                                   Foreground="{Binding ElementName=HistorySection, Path=DataContext.StatsColor}">
+                            <Run Text="{Binding Timestamp, Converter={StaticResource DateTimeFmt}, ConverterParameter='HH:mm:ss.fff'}" />
+                            <Run Text="  " />
+                            <Run Text="{Binding Status}" />
+                            <Run Text="  " />
+                            <Run Text="{Binding RttMs, Converter={StaticResource DoubleFmt}, ConverterParameter='F1'}" />ms
+                        </TextBlock>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- Stats Bar -->
+            <Border x:Name="StatsSection" Grid.Row="2" Background="{DynamicResource CardStatsBg}" Padding="6,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{Binding StatsText}"
+                               Foreground="{DynamicResource CardTextBright}" FontSize="9"
+                               FontFamily="Consolas" VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="1" Text="{Binding LatestRtt}"
+                               Foreground="{DynamicResource CardTextBright}" FontSize="14"
+                               FontWeight="Bold" FontFamily="Consolas"
+                               HorizontalAlignment="Right"
+                               VerticalAlignment="Center" Margin="4,0" />
+                </Grid>
+            </Border>
+
+            <!-- Bottom Input Bar -->
+            <Grid x:Name="InputSection" Grid.Row="3" Background="{DynamicResource CardInputBg}" Margin="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Rectangle VerticalAlignment="Top" Height="1" IsHitTestVisible="False" Fill="#10000000" Grid.ColumnSpan="2" />
+
+                <TextBox Grid.Column="0" Text="{Binding Hostname, UpdateSourceTrigger=PropertyChanged}"
+                         FontFamily="Consolas" FontSize="12" VerticalContentAlignment="Center"
+                         Foreground="{DynamicResource CardTextBright}" Background="Transparent"
+                         BorderThickness="0" Padding="8,4"
+                         IsReadOnly="{Binding IsRunning}" />
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="4,0">
+                    <Button Content="{converters:Translate Key=Start}" ToolTip="{converters:Translate Key=StartTip}" MinWidth="80" Height="30"
+                            Margin="0,0,4,0" Padding="6,0"
+                            FontSize="10" FontWeight="Bold"
+                            Background="Transparent" BorderThickness="0" Cursor="Hand"
+                            Foreground="{DynamicResource CardTextBright}"
+                            Command="{Binding StartProbeCommand}"
+                            Visibility="{Binding IsRunning, Converter={StaticResource InverseBoolToVis}}">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="border" Background="{TemplateBinding Background}"
+                                        BorderBrush="{DynamicResource CardBorderColor}" BorderThickness="1"
+                                        CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="border" Property="Background" Value="{DynamicResource HoverOverlay}" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
+                    <Button Content="{converters:Translate Key=Stop}" ToolTip="{converters:Translate Key=StopTip}" MinWidth="80" Height="30"
+                            Padding="6,0"
+                            FontSize="10" FontWeight="Bold"
+                            Background="Transparent" BorderThickness="0" Cursor="Hand"
+                            Foreground="{DynamicResource RedColor}"
+                            Command="{Binding StopProbeCommand}"
+                            Visibility="{Binding IsRunning, Converter={StaticResource BoolToVis}}">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="border" Background="{TemplateBinding Background}"
+                                        BorderBrush="{DynamicResource RedColor}" BorderThickness="1"
+                                        CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="border" Property="Background" Value="{DynamicResource HoverOverlay}" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>
