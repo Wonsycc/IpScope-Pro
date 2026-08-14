@@ -1,0 +1,66 @@
+<Window x:Class="IpScopePro.Views.BatchInputDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="clr-namespace:IpScopePro.Converters"
+        Title="{converters:Translate Key=BatchInputTitle}" Height="400" Width="500"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        WindowStyle="None" AllowsTransparency="True"
+        Background="{DynamicResource WindowBg}" Foreground="{DynamicResource WindowFg}"
+        FontFamily="Segoe UI" FontSize="12">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="40" ResizeBorderThickness="0"
+                       GlassFrameThickness="0" CornerRadius="12" />
+    </WindowChrome.WindowChrome>
+
+    <Border CornerRadius="12" Background="{DynamicResource WindowBg}"
+            BorderBrush="{DynamicResource BorderColor}" BorderThickness="1">
+        <Border.Effect>
+            <DropShadowEffect ShadowDepth="4" BlurRadius="16" Opacity="0.3" />
+        </Border.Effect>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Background="{DynamicResource TitleBarBg}" CornerRadius="12,12,0,0"
+                    MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{converters:Translate Key=BatchInputHeader}" FontSize="13" FontWeight="SemiBold"
+                               Foreground="{DynamicResource WindowFg}" VerticalAlignment="Center" Margin="12,0" />
+                    <Button Grid.Column="1" Content="✕" Width="36" Height="30"
+                            Style="{DynamicResource FlatButton}"
+                            Foreground="{DynamicResource RedColor}" FontSize="14" Click="Cancel_Click" />
+                </Grid>
+            </Border>
+
+            <StackPanel Grid.Row="1" Margin="16,12">
+                <TextBlock Text="{converters:Translate Key=EnterHosts}" FontSize="11"
+                           Foreground="{DynamicResource SubtleFg}" Margin="0,0,0,8" />
+                <TextBlock Text="{converters:Translate Key=FormatHint}" FontSize="10"
+                           Foreground="{DynamicResource MutedFg}" Margin="0,0,0,10" />
+                <TextBox x:Name="AddressesBox" AcceptsReturn="True" TextWrapping="Wrap"
+                         MinLines="8" VerticalScrollBarVisibility="Auto"
+                         Style="{StaticResource ThemedTextBox}" FontFamily="Consolas" FontSize="12"
+                         Padding="10,8" />
+            </StackPanel>
+
+            <Border Grid.Row="2" Padding="14" Background="{DynamicResource TitleBarBg}" CornerRadius="0,0,12,12">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="{converters:Translate Key=Cancel}" MinWidth="90" Height="34"
+                            Style="{DynamicResource FlatButton}" Padding="10,4"
+                            Foreground="{DynamicResource SubtleFg}" FontSize="12" Click="Cancel_Click" />
+                    <Button Content="{converters:Translate Key=AddAll}" MinWidth="90" Height="34" Margin="10,0,0,0"
+                            Style="{DynamicResource AccentButton}" Padding="10,4"
+                            FontSize="12" Click="Add_Click" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
