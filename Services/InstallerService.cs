@@ -42,60 +42,115 @@ public class InstallerService
         catch { }
     }
 
-    public async Task<string> InstallAsync()
+    public async Task<string> InstallAsync(string targetDir, bool desktopShortcut, bool startMenuShortcut)
     {
         var exe = Environment.ProcessPath;
         if (string.IsNullOrEmpty(exe))
             throw new InvalidOperationException("Cannot determine current executable path.");
 
+        var installDir = Path.TrimEndingDirectorySeparator(Path.GetFullPath(targetDir));
+
         if (AppEnvironment.IsInstalled)
-            return exe;
+            return Path.Combine(installDir, Path.GetFileName(exe));
 
-        Directory.CreateDirectory(AppEnvironment.InstallDir);
-        await Task.Run(() => CopyDirectory(AppContext.BaseDirectory, AppEnvironment.InstallDir));
+        Directory.CreateDirectory(installDir);
+        EnsureWritable(installDir);
 
-        var installedExe = Path.Combine(AppEnvironment.InstallDir, Path.GetFileName(exe));
+        await Task.Run(() => CopyDirectory(AppContext.BaseDirectory, installDir));
+
+        var installedExe = Path.Combine(installDir, Path.GetFileName(exe));
 
         using (var key = Registry.CurrentUser.CreateSubKey(AppEnvironment.RegistryRootKey))
-            key.SetValue("InstallDir", AppEnvironment.InstallDir);
+            key.SetValue("InstallDir", installDir);
 
-        CreateShortcut(installedExe,
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Microsoft", "Windows", "Start Menu", "Programs", "IpScopePro.lnk"),
-            "IpScope Pro");
+        if (startMenuShortcut)
+            CreateShortcut(installedExe, StartMenuShortcutPath, "IpScope Pro");
+
+        if (desktopShortcut)
+            CreateShortcut(installedExe, DesktopShortcutPath, "IpScope Pro");
 
         return installedExe;
     }
 
-    public void Uninstall()
+    public void Uninstall(bool deleteData)
     {
         SetStartWithWindows(false);
 
+        string? installDir = null;
         try
         {
-            var shortcut = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Microsoft", "Windows", "Start Menu", "Programs", "IpScopePro.lnk");
-            if (File.Exists(shortcut))
-                File.Delete(shortcut);
+            using var key = Registry.CurrentUser.OpenSubKey(AppEnvironment.RegistryRootKey);
+            installDir = key?.GetValue("InstallDir") as string;
         }
         catch { }
 
+        foreach (var shortcut in new[] { StartMenuShortcutPath, DesktopShortcutPath })
+        {
+            try
+            {
+                if (File.Exists(shortcut))
+                    File.Delete(shortcut);
+            }
+            catch { }
+        }
+
         try { Registry.CurrentUser.DeleteSubKey(AppEnvironment.RegistryRootKey, throwOnMissingSubKey: false); }
         catch { }
+
+        if (!string.IsNullOrEmpty(installDir))
+        {
+            try
+            {
+                if (Directory.Exists(installDir))
+                    DeleteDirectoryBestEffort(installDir);
+            }
+            catch { }
+        }
+
+        if (deleteData)
+        {
+            var dataDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IpScopePro");
+            try
+            {
+                if (Directory.Exists(dataDir))
+                    DeleteDirectoryBestEffort(dataDir);
+            }
+            catch { }
+        }
+    }
+
+    private static void DeleteDirectoryBestEffort(string dir)
+    {
+        foreach (var file in Directory.GetFiles(dir))
+        {
+            try { File.Delete(file); } catch { }
+        }
+        foreach (var sub in Directory.GetDirectories(dir))
+        {
+            try { DeleteDirectoryBestEffort(sub); } catch { }
+        }
+        try { Directory.Delete(dir, false); } catch { }
+    }
+
+    private static string StartMenuShortcutPath => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.Programs), "IpScopePro.lnk");
+
+    private static string DesktopShortcutPath => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "IpScopePro.lnk");
+
+    private static void EnsureWritable(string dir)
+    {
+        var test = Path.Combine(dir, ".IpScopeProWriteTest");
+        File.WriteAllText(test, string.Empty);
+        File.Delete(test);
     }
 
     private static void CopyDirectory(string source, string destination)
     {
         Directory.CreateDirectory(destination);
         foreach (var file in Directory.GetFiles(source))
-        {
-            try
-            {
-                File.Copy(file, Path.Combine(destination, Path.GetFileName(file)), overwrite: true);
-            }
-            catch { }
-        }
+            File.Copy(file, Path.Combine(destination, Path.GetFileName(file)), overwrite: true);
         foreach (var dir in Directory.GetDirectories(source))
             CopyDirectory(dir, Path.Combine(destination, Path.GetFileName(dir)));
     }
@@ -112,9 +167,33 @@ public class InstallerService
             shortcut.TargetPath = target;
             shortcut.WorkingDirectory = Path.GetDirectoryName(target);
             shortcut.Description = description;
+            shortcut.IconLocation = target + ",0";
             shortcut.Save();
         }
         catch { }
+    }
+
+    public static void RelaunchElevated(string targetDir, bool desktopShortcut, bool startMenuShortcut)
+    {
+        var exe = Environment.ProcessPath;
+        if (string.IsNullOrEmpty(exe)) return;
+
+        var psi = new ProcessStartInfo
+        {
+            FileName = exe,
+            UseShellExecute = true,
+            Verb = "runas"
+        };
+        psi.ArgumentList.Add("--install");
+        psi.ArgumentList.Add("--install-dir");
+        psi.ArgumentList.Add(targetDir);
+        psi.ArgumentList.Add("--desktop-shortcut");
+        psi.ArgumentList.Add(desktopShortcut ? "true" : "false");
+        psi.ArgumentList.Add("--start-menu-shortcut");
+        psi.ArgumentList.Add(startMenuShortcut ? "true" : "false");
+
+        try { Process.Start(psi); }
+        catch (System.ComponentModel.Win32Exception) { }
     }
 
     public static void LaunchInstalled(string installedExe)

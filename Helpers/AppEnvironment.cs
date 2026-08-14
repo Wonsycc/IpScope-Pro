@@ -6,9 +6,24 @@ public static class AppEnvironment
 {
     private const string RegistryRoot = @"Software\IpScopePro";
 
-    public static string InstallDir { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "Programs", "IpScopePro");
+    public static string DefaultInstallDir { get; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "IpScopePro");
+
+    public static string InstallDir
+    {
+        get
+        {
+            try
+            {
+                using var key = Registry.CurrentUser.OpenSubKey(RegistryRoot);
+                var installDir = key?.GetValue("InstallDir") as string;
+                if (!string.IsNullOrEmpty(installDir))
+                    return installDir;
+            }
+            catch { }
+            return DefaultInstallDir;
+        }
+    }
 
     public static bool IsInstalled
     {

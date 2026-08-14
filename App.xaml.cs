@@ -42,6 +42,12 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        if (e.Args.Any(a => a.Equals("--install", StringComparison.OrdinalIgnoreCase)))
+        {
+            RunHeadlessInstall(e.Args);
+            return;
+        }
+
         try
         {
             var services = new ServiceCollection();
@@ -71,5 +77,34 @@ public partial class App : Application
                 MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown();
         }
+    }
+
+    private void RunHeadlessInstall(string[] args)
+    {
+        try
+        {
+            var dir = GetArg(args, "--install-dir") ?? AppEnvironment.DefaultInstallDir;
+            var desktop = bool.TryParse(GetArg(args, "--desktop-shortcut"), out var d) && d;
+            var startMenu = bool.TryParse(GetArg(args, "--start-menu-shortcut"), out var s) && s;
+
+            var installer = new InstallerService();
+            var installedExe = installer.InstallAsync(dir, desktop, startMenu).GetAwaiter().GetResult();
+            InstallerService.LaunchInstalled(installedExe);
+            Shutdown();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Failed to install application: {ex.Message}", "IpScope Pro",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown();
+        }
+    }
+
+    private static string? GetArg(string[] args, string name)
+    {
+        for (var i = 0; i < args.Length - 1; i++)
+            if (args[i].Equals(name, StringComparison.OrdinalIgnoreCase))
+                return args[i + 1];
+        return null;
     }
 }
