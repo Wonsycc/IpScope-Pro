@@ -49,13 +49,29 @@ public partial class SettingsDialog : Window
 
     private async void TestEmail_Click(object sender, RoutedEventArgs e)
     {
-        _viewModel.SmtpPassword = SmtpPasswordBox.Password;
-        await _viewModel.TestEmailCommand.ExecuteAsync(null);
+        try
+        {
+            _viewModel.SmtpPassword = SmtpPasswordBox.Password;
+            await _viewModel.TestEmailCommand.ExecuteAsync(null);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, LocalizationService.Instance["TestEmailTitle"],
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private async void TestTelegram_Click(object sender, RoutedEventArgs e)
     {
-        await _viewModel.TestTelegramCommand.ExecuteAsync(null);
+        try
+        {
+            await _viewModel.TestTelegramCommand.ExecuteAsync(null);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, LocalizationService.Instance["TestTelegramTitle"],
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void ColorSwatch_Click(object sender, RoutedEventArgs e)
@@ -158,8 +174,9 @@ public partial class SettingsDialog : Window
                 return;
             }
             CopyOptions(imported, _options);
+            _viewModel.ReloadFromOptions();
+            SmtpPasswordBox.Password = _viewModel.SmtpPassword ?? string.Empty;
             _options.Save();
-            _viewModel.SaveCommand.Execute(null);
             LocalizationService.Instance.Language = _options.Language;
             MessageBox.Show(LocalizationService.Instance["ImportSuccess"], LocalizationService.Instance["ImportTitle"], MessageBoxButton.OK, MessageBoxImage.Information);
         }
@@ -174,12 +191,9 @@ public partial class SettingsDialog : Window
 
     private static void CopyOptions(ApplicationOptions from, ApplicationOptions to)
     {
-        var json = System.Text.Json.JsonSerializer.Serialize(from);
-        var result = System.Text.Json.JsonSerializer.Deserialize<ApplicationOptions>(json);
-        if (result == null) return;
         foreach (var prop in typeof(ApplicationOptions).GetProperties())
         {
-            if (prop.CanWrite) prop.SetValue(to, prop.GetValue(result));
+            if (prop.CanWrite) prop.SetValue(to, prop.GetValue(from));
         }
     }
 
@@ -227,12 +241,10 @@ public partial class SettingsDialog : Window
 
     private void Uninstall_Click(object sender, RoutedEventArgs e)
     {
-        var result = MessageBox.Show(LocalizationService.Instance["UninstallConfirm"], "IpScope Pro",
-            MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+        var dialog = new UninstallDialog { Owner = this };
+        if (dialog.ShowDialog() != true) return;
 
-        if (result == MessageBoxResult.Cancel) return;
-
-        var deleteData = result == MessageBoxResult.Yes;
+        var deleteData = dialog.DeleteData;
 
         try
         {

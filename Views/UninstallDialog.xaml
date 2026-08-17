@@ -1,0 +1,120 @@
+<Window x:Class="IpScopePro.Views.UninstallDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="clr-namespace:IpScopePro.Converters"
+        Title="{converters:Translate Key=UninstallTitle}" Height="440" Width="520"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        WindowStyle="None" AllowsTransparency="True" ShowInTaskbar="False"
+        Background="{DynamicResource WindowBg}" Foreground="{DynamicResource WindowFg}"
+        FontFamily="Segoe UI" FontSize="12">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="40" ResizeBorderThickness="0"
+                       GlassFrameThickness="0" CornerRadius="12" />
+    </WindowChrome.WindowChrome>
+
+    <Border CornerRadius="12" Background="{DynamicResource WindowBg}"
+            BorderBrush="{DynamicResource BorderColor}" BorderThickness="1">
+        <Border.Effect>
+            <DropShadowEffect ShadowDepth="4" BlurRadius="16" Opacity="0.3" />
+        </Border.Effect>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Border Grid.Row="0" Background="{DynamicResource TitleBarBg}" CornerRadius="12,12,0,0"
+                    MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{converters:Translate Key=UninstallTitle}" FontSize="13" FontWeight="SemiBold"
+                               Foreground="{DynamicResource WindowFg}" VerticalAlignment="Center" Margin="12,0" />
+                    <Button Grid.Column="1" Content="✕" Width="36" Height="30"
+                            Style="{DynamicResource FlatButton}"
+                            Foreground="{DynamicResource RedColor}" FontSize="14" Click="Cancel_Click" />
+                </Grid>
+            </Border>
+
+            <!-- Content -->
+            <StackPanel Grid.Row="1" Margin="20,16">
+
+                <!-- Warning banner -->
+                <Border Background="{DynamicResource SurfaceBg}" CornerRadius="8"
+                        BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" Padding="14,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="⚠" FontSize="22"
+                                   Foreground="{DynamicResource YellowColor}" VerticalAlignment="Top"
+                                   Margin="0,0,12,0" />
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="{converters:Translate Key=UninstallWarning}"
+                                       FontWeight="SemiBold" FontSize="13"
+                                       Foreground="{DynamicResource WindowFg}" TextWrapping="Wrap" />
+                            <TextBlock Text="{converters:Translate Key=UninstallSummary}"
+                                       FontSize="11" Foreground="{DynamicResource MutedFg}"
+                                       TextWrapping="Wrap" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Data question -->
+                <TextBlock Text="{converters:Translate Key=UninstallDataQuestion}"
+                           FontWeight="SemiBold" FontSize="12"
+                           Foreground="{DynamicResource WindowFg}" Margin="0,18,0,8" />
+
+                <!-- Keep data option -->
+                <Border Background="{DynamicResource InputBg}" CornerRadius="8"
+                        BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" Padding="12,10">
+                    <RadioButton x:Name="KeepDataOption" GroupName="DataChoice" IsChecked="True"
+                                 Style="{DynamicResource ThemedRadioButton}" Margin="0">
+                        <StackPanel>
+                            <TextBlock Text="{converters:Translate Key=UninstallKeepData}"
+                                       FontWeight="SemiBold" Foreground="{DynamicResource WindowFg}" />
+                            <TextBlock Text="{converters:Translate Key=UninstallKeepDataHint}"
+                                       FontSize="10.5" Foreground="{DynamicResource MutedFg}"
+                                       TextWrapping="Wrap" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </RadioButton>
+                </Border>
+
+                <!-- Delete data option -->
+                <Border Background="{DynamicResource InputBg}" CornerRadius="8"
+                        BorderBrush="{DynamicResource BorderColor}" BorderThickness="1"
+                        Padding="12,10" Margin="0,10,0,0">
+                    <RadioButton x:Name="DeleteDataOption" GroupName="DataChoice"
+                                 Style="{DynamicResource ThemedRadioButton}" Margin="0">
+                        <StackPanel>
+                            <TextBlock Text="{converters:Translate Key=UninstallDeleteData}"
+                                       FontWeight="SemiBold" Foreground="{DynamicResource WindowFg}" />
+                            <TextBlock Text="{converters:Translate Key=UninstallDeleteDataHint}"
+                                       FontSize="10.5" Foreground="{DynamicResource MutedFg}"
+                                       TextWrapping="Wrap" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </RadioButton>
+                </Border>
+
+            </StackPanel>
+
+            <!-- Footer -->
+            <Border Grid.Row="2" Padding="14" Background="{DynamicResource TitleBarBg}" CornerRadius="0,0,12,12">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="{converters:Translate Key=Cancel}" MinWidth="90" Height="34"
+                            Style="{DynamicResource FlatButton}" Padding="10,4"
+                            Foreground="{DynamicResource SubtleFg}" FontSize="12" Click="Cancel_Click" />
+                    <Button Content="{converters:Translate Key=UninstallAction}" MinWidth="120" Height="34" Margin="10,0,0,0"
+                            Style="{DynamicResource DangerButton}" Padding="10,4"
+                            FontSize="12" Click="Uninstall_Click" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

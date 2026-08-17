@@ -80,6 +80,8 @@ public partial class SettingsViewModel : ObservableObject
         LoadFromOptions();
     }
 
+    public void ReloadFromOptions() => LoadFromOptions();
+
     private void LoadFromOptions()
     {
         IsInstalled = AppEnvironment.IsInstalled;
@@ -160,7 +162,7 @@ public partial class SettingsViewModel : ObservableObject
         _options.SmtpPort = SmtpPort;
         _options.SmtpUsername = SmtpUsername;
         _options.SmtpPassword = SmtpPassword;
-        _options.EmailFrom = SmtpUsername;
+        _options.EmailFrom = EmailFrom;
         _options.EmailTo = EmailTo;
         _options.SmtpUseSsl = SmtpUseSsl;
         _options.TelegramEnabled = TelegramEnabled;
@@ -249,7 +251,8 @@ public partial class SettingsViewModel : ObservableObject
     public async Task TestEmail()
     {
         if (string.IsNullOrWhiteSpace(SmtpServer) || string.IsNullOrWhiteSpace(SmtpUsername) ||
-            string.IsNullOrWhiteSpace(SmtpPassword) || string.IsNullOrWhiteSpace(EmailTo))
+            string.IsNullOrWhiteSpace(SmtpPassword) || string.IsNullOrWhiteSpace(EmailFrom) ||
+            string.IsNullOrWhiteSpace(EmailTo))
         {
             MessageBox.Show(LocalizationService.Instance["FillEmailFields"],
                 LocalizationService.Instance["TestEmailTitle"], MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -258,7 +261,7 @@ public partial class SettingsViewModel : ObservableObject
 
         var (success, error) = await _notificationService.SendTestEmail(
             SmtpServer, SmtpPort, SmtpUseSsl,
-            SmtpUsername, SmtpPassword, SmtpUsername, EmailTo);
+            SmtpUsername, SmtpPassword, EmailFrom, EmailTo);
 
         if (success)
             MessageBox.Show(LocalizationService.Instance["TestEmailSent"], LocalizationService.Instance["TestEmailTitle"], MessageBoxButton.OK, MessageBoxImage.Information);

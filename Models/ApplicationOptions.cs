@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using IpScopePro.Helpers;
 
@@ -53,7 +55,7 @@ public class ApplicationOptions
     public bool StartWithWindows { get; set; }
 
     public bool IsDarkTheme { get; set; } = true;
-    public bool IsScrollView { get; set; } = true;
+    public bool IsScrollView { get; set; }
     public AppLanguage Language { get; set; } = AppLanguage.Spanish;
     public string SeedColor { get; set; } = "#16A34A";
     public string FontFamily { get; set; } = "Segoe UI";
@@ -108,7 +110,13 @@ public class ApplicationOptions
         {
             if (File.Exists(ConfigPath))
             {
-                var json = File.ReadAllText(ConfigPath);
+                var content = File.ReadAllText(ConfigPath).Trim();
+
+                var json = content.StartsWith('{')
+                    ? content
+                    : Encoding.UTF8.GetString(
+                        ProtectedData.Unprotect(Convert.FromBase64String(content), null, DataProtectionScope.CurrentUser));
+
                 return JsonSerializer.Deserialize<ApplicationOptions>(json) ?? new ApplicationOptions();
             }
         }
@@ -125,8 +133,9 @@ public class ApplicationOptions
         {
             var dir = Path.GetDirectoryName(ConfigPath)!;
             Directory.CreateDirectory(dir);
-            var opts = new JsonSerializerOptions { WriteIndented = true };
-            File.WriteAllText(ConfigPath, JsonSerializer.Serialize(this, opts));
+            var json = JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
+            var cipher = ProtectedData.Protect(Encoding.UTF8.GetBytes(json), null, DataProtectionScope.CurrentUser);
+            File.WriteAllText(ConfigPath, Convert.ToBase64String(cipher));
         }
         catch { }
     }

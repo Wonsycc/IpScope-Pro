@@ -1,7 +1,8 @@
 using System.Collections.Concurrent;
-using System.Net;
-using System.Net.Mail;
 using IpScopePro.Models;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
 
 namespace IpScopePro.Services;
 
@@ -24,10 +25,19 @@ public class NotificationService
 
     public async Task HandleStatusChange(Probe probe, StatusChangeLogEntry entry)
     {
+        try
+        {
+            await HandleStatusChangeCore(probe, entry);
+        }
+        catch { }
+    }
+
+    private async Task HandleStatusChangeCore(Probe probe, StatusChangeLogEntry entry)
+    {
+        LogToFile(entry);
+
         if (!_options.NotificationsEnabled)
             return;
-
-        LogToFile(entry);
 
         if (entry.NewStatus == ProbeStatus.Inactive)
             return;
@@ -134,23 +144,24 @@ public class NotificationService
     {
         try
         {
-            using var client = new SmtpClient(smtpServer, smtpPort)
-            {
-                EnableSsl = useSsl,
-                Credentials = new NetworkCredential(username, password)
-            };
-
-            var mail = new MailMessage
-            {
-                From = new MailAddress(from),
-                Subject = subject,
-                Body = body,
-                IsBodyHtml = true
-            };
+            var message = new MimeMessage();
+            message.From.Add(MailboxAddress.Parse(from));
             foreach (var addr in to.Split(',', StringSplitOptions.RemoveEmptyEntries))
-                mail.To.Add(addr.Trim());
+                message.To.Add(MailboxAddress.Parse(addr.Trim()));
+            message.Subject = subject;
+            message.Body = new BodyBuilder { HtmlBody = body }.ToMessageBody();
 
-            await client.SendMailAsync(mail);
+            using var client = new SmtpClient();
+            client.Timeout = 15000;
+
+            var options = useSsl
+                ? (smtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls)
+                : SecureSocketOptions.None;
+
+            await client.ConnectAsync(smtpServer, smtpPort, options);
+            await client.AuthenticateAsync(username, password);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
             return (true, string.Empty);
         }
         catch (Exception ex)

@@ -12,20 +12,29 @@ public partial class ScannerView : UserControl
 
     private void TransferToProbes_Click(object sender, RoutedEventArgs e)
     {
-        if (DataContext is ViewModels.ScannerViewModel scannerVm)
+        if (DataContext is not ViewModels.ScannerViewModel scannerVm)
+            return;
+
+        var selected = ResultsGrid.SelectedItems.Cast<Services.ScanResult>()
+            .Where(r => r.IsAlive)
+            .ToList();
+
+        if (selected.Count == 0) return;
+
+        var mainWindow = Window.GetWindow(this) as MainWindow;
+        var mainVm = mainWindow?.DataContext as ViewModels.MainViewModel;
+        if (mainVm == null) return;
+
+        var dialog = new ScannerPortsDialog(selected)
         {
-            var selected = ResultsGrid.SelectedItems.Cast<Services.ScanResult>();
+            Owner = mainWindow,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
 
-            var mainWindow = Window.GetWindow(this) as MainWindow;
-            var mainVm = mainWindow?.DataContext as ViewModels.MainViewModel;
-
-            foreach (var result in selected)
-            {
-                if (result.IsAlive && mainVm != null)
-                {
-                    mainVm.AddProbeFromScanner(result.Ip, result.Hostname);
-                }
-            }
+        if (dialog.ShowDialog() == true)
+        {
+            foreach (var item in dialog.SelectedItems)
+                mainVm.AddProbeFromScanner(item.Ip, item.Hostname, item.Port);
         }
     }
 }

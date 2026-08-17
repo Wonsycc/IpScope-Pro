@@ -15,7 +15,7 @@ Aplicación de escritorio para **monitorización y escaneo de red** en Windows. 
 ## Modo portable vs. instalado
 
 - **Portable (por defecto)**: el `.exe` se ejecuta desde cualquier carpeta y no guarda nada. Los ajustes y monitores viven en memoria y se pierden al cerrar. Para conservarlos, usa *Exportar/Importar*. El log a fichero está desactivado por defecto y su ruta es configurable.
-- **Instalado**: desde *Ajustes → Instalación → Instalar en Windows*, la app se copia a `%LOCALAPPDATA%\Programs\IpScopePro`, guarda los ajustes en `%LOCALAPPDATA%\IpScopePro` y habilita *Iniciar con Windows* y el acceso directo en el Menú Inicio.
+- **Instalado**: desde *Ajustes → Instalación → Instalar en Windows* se abre un asistente donde eliges la carpeta de instalación (por defecto *Archivos de programa*), si crear accesos directos en el escritorio y el menú Inicio, y la app se registra en Windows (aparece en *Aplicaciones y características* con su desinstalador). Los ajustes y monitores se guardan en `%LOCALAPPDATA%\IpScopePro` y se habilita *Iniciar con Windows*.
 
 ## Requisitos
 
@@ -25,12 +25,17 @@ Aplicación de escritorio para **monitorización y escaneo de red** en Windows. 
 
 ## Descargar / Ejecutar
 
-La carpeta de release contiene:
+Cada release incluye dos variantes para Windows x64:
 
-- `IpScopePro.exe`
-- 5 DLL nativos de WPF (obligatorios, deben ir junto al `.exe`).
+| Archivo | Tamaño aprox. | Requiere |
+|---|---|---|
+| `IpScopePro-vX.Y.Z-win-x64-self-contained` | ~78 MB | Nada |
+| `IpScopePro-vX.Y.Z-win-x64-framework-dependent` | ~39 MB | .NET 9 Desktop Runtime |
 
-Comprime toda la carpeta en un ZIP para distribuirla. En el primer arranque no es necesario instalar nada.
+- **self-contained**: lleva todo incluido; basta ejecutar `IpScopePro.exe`.
+- **framework-dependent**: más ligera; necesita el [.NET 9 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/9.0) instalado.
+
+En ambas basta con ejecutar `IpScopePro.exe` (no requiere instalación). La variante autocontenida incluye 5 DLL nativos de WPF junto al `.exe`.
 
 ## Compilar desde el código
 

@@ -8,6 +8,8 @@ public class InstallerService
 {
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
     private const string RunValueName = "IpScopePro";
+    private const string UninstallKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\IpScopePro";
+    private const string AppPathsKeyPath = @"Software\Microsoft\Windows\CurrentVersion\App Paths\IpScopePro.exe";
 
     public bool IsStartWithWindows()
     {
@@ -56,7 +58,7 @@ public class InstallerService
         Directory.CreateDirectory(installDir);
         EnsureWritable(installDir);
 
-        await Task.Run(() => CopyDirectory(AppContext.BaseDirectory, installDir));
+        await Task.Run(() => CopyDirectory(AppContext.BaseDirectory, installDir)).ConfigureAwait(false);
 
         var installedExe = Path.Combine(installDir, Path.GetFileName(exe));
 
@@ -68,6 +70,9 @@ public class InstallerService
 
         if (desktopShortcut)
             CreateShortcut(installedExe, DesktopShortcutPath, "IpScope Pro");
+
+        RegisterUninstall(installDir, installedExe);
+        RegisterAppPaths(installDir, installedExe);
 
         return installedExe;
     }
@@ -94,17 +99,19 @@ public class InstallerService
             catch { }
         }
 
-        try { Registry.CurrentUser.DeleteSubKey(AppEnvironment.RegistryRootKey, throwOnMissingSubKey: false); }
+        try { Registry.CurrentUser.DeleteSubKeyTree(AppEnvironment.RegistryRootKey, throwOnMissingSubKey: false); }
         catch { }
 
-        if (!string.IsNullOrEmpty(installDir))
+        try { Registry.CurrentUser.DeleteSubKey(UninstallKeyPath, throwOnMissingSubKey: false); }
+        catch { }
+
+        try { Registry.CurrentUser.DeleteSubKey(AppPathsKeyPath, throwOnMissingSubKey: false); }
+        catch { }
+
+        if (!string.IsNullOrEmpty(installDir) && Directory.Exists(installDir))
         {
-            try
-            {
-                if (Directory.Exists(installDir))
-                    DeleteDirectoryBestEffort(installDir);
-            }
-            catch { }
+            DeleteDirectoryBestEffort(installDir);
+            ScheduleDirectoryDeletion(installDir);
         }
 
         if (deleteData)
@@ -117,6 +124,64 @@ public class InstallerService
                     DeleteDirectoryBestEffort(dataDir);
             }
             catch { }
+        }
+    }
+
+    private static void RegisterUninstall(string installDir, string installedExe)
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.CreateSubKey(UninstallKeyPath);
+            if (key == null) return;
+
+            key.SetValue("DisplayName", "IpScope Pro");
+            key.SetValue("DisplayVersion", AppVersion);
+            key.SetValue("Publisher", "IpScope");
+            key.SetValue("InstallLocation", installDir);
+            key.SetValue("DisplayIcon", installedExe);
+            key.SetValue("UninstallString", $"\"{installedExe}\" --uninstall");
+            key.SetValue("NoModify", 1);
+            key.SetValue("NoRepair", 1);
+        }
+        catch { }
+    }
+
+    private static void RegisterAppPaths(string installDir, string installedExe)
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.CreateSubKey(AppPathsKeyPath);
+            if (key == null) return;
+
+            key.SetValue("", installedExe);
+            key.SetValue("Path", installDir);
+        }
+        catch { }
+    }
+
+    private static void ScheduleDirectoryDeletion(string dir)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = $"/c ping 127.0.0.1 -n 3 >nul & rmdir /s /q \"{dir}\"",
+                WindowStyle = ProcessWindowStyle.Hidden,
+                CreateNoWindow = true,
+                UseShellExecute = false
+            };
+            Process.Start(psi);
+        }
+        catch { }
+    }
+
+    private static string AppVersion
+    {
+        get
+        {
+            var v = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            return v is null ? "1.0.0" : $"{v.Major}.{v.Minor}.{v.Build}";
         }
     }
 
@@ -150,7 +215,13 @@ public class InstallerService
     {
         Directory.CreateDirectory(destination);
         foreach (var file in Directory.GetFiles(source))
-            File.Copy(file, Path.Combine(destination, Path.GetFileName(file)), overwrite: true);
+        {
+            try
+            {
+                File.Copy(file, Path.Combine(destination, Path.GetFileName(file)), overwrite: true);
+            }
+            catch { }
+        }
         foreach (var dir in Directory.GetDirectories(source))
             CopyDirectory(dir, Path.Combine(destination, Path.GetFileName(dir)));
     }
@@ -178,22 +249,21 @@ public class InstallerService
         var exe = Environment.ProcessPath;
         if (string.IsNullOrEmpty(exe)) return;
 
+        var args = $"--install --install-dir \"{targetDir.Replace("\"", "\\\"")}\" " +
+                   $"--desktop-shortcut {desktopShortcut.ToString().ToLowerInvariant()} " +
+                   $"--start-menu-shortcut {startMenuShortcut.ToString().ToLowerInvariant()}";
+
         var psi = new ProcessStartInfo
         {
             FileName = exe,
             UseShellExecute = true,
-            Verb = "runas"
+            Verb = "runas",
+            Arguments = args
         };
-        psi.ArgumentList.Add("--install");
-        psi.ArgumentList.Add("--install-dir");
-        psi.ArgumentList.Add(targetDir);
-        psi.ArgumentList.Add("--desktop-shortcut");
-        psi.ArgumentList.Add(desktopShortcut ? "true" : "false");
-        psi.ArgumentList.Add("--start-menu-shortcut");
-        psi.ArgumentList.Add(startMenuShortcut ? "true" : "false");
 
         try { Process.Start(psi); }
         catch (System.ComponentModel.Win32Exception) { }
+        catch { }
     }
 
     public static void LaunchInstalled(string installedExe)
