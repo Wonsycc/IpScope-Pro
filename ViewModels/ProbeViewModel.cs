@@ -23,7 +23,12 @@ public partial class ProbeViewModel : ObservableObject
     [ObservableProperty] private string _alias = string.Empty;
 
     partial void OnHostnameChanged(string value) => OnPropertyChanged(nameof(DisplayName));
-    partial void OnAliasChanged(string value) => OnPropertyChanged(nameof(DisplayName));
+
+    partial void OnAliasChanged(string value)
+    {
+        _probe.Alias = value ?? string.Empty;
+        OnPropertyChanged(nameof(DisplayName));
+    }
 
     [ObservableProperty] private ProbeType _type;
     [ObservableProperty] private int _port = 80;

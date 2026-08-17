@@ -135,12 +135,6 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                       Style="{DynamicResource ThemedScrollViewer}"
                       Visibility="{Binding IsScrollView, Converter={StaticResource BoolToVis}}">
-            <ScrollViewer.Resources>
-                <Style TargetType="ScrollBar">
-                    <Setter Property="Width" Value="5" />
-                    <Setter Property="Background" Value="Transparent" />
-                </Style>
-            </ScrollViewer.Resources>
             <ItemsControl ItemsSource="{Binding Probes}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>

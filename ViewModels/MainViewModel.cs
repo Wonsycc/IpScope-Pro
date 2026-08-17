@@ -25,7 +25,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private int _selectedTabIndex;
     [ObservableProperty] private bool _isDarkTheme = true;
     [ObservableProperty] private string _windowTitle = "IpScope Pro - Probes";
-    [ObservableProperty] private bool _isScrollView = true;
+    [ObservableProperty] private bool _isScrollView;
     [ObservableProperty] private bool _isFixedOverflowing;
     [ObservableProperty] private ProbeViewModel? _maximizedProbeVm;
 
@@ -102,14 +102,26 @@ public partial class MainViewModel : ObservableObject
         Probes.Add(vm);
     }
 
-    public void AddProbeFromScanner(string hostname, string? alias = null)
+    public void AddProbeFromScanner(string hostname, string? alias = null, int port = 0)
     {
         var probe = new Probe
         {
-            Alias = alias ?? string.Empty,
             Status = ProbeStatus.Indeterminate
         };
-        probe.ParseHostname(hostname);
+
+        var displayAlias = alias ?? string.Empty;
+        if (port > 0)
+        {
+            probe.ParseHostname($"{hostname}:{port}");
+            if (!string.IsNullOrWhiteSpace(displayAlias))
+                displayAlias = $"{displayAlias}:{port}";
+        }
+        else
+        {
+            probe.ParseHostname(hostname);
+        }
+
+        probe.Alias = displayAlias;
 
         _probeManager.AddProbe(probe);
         var vm = CreateProbeVm(probe);

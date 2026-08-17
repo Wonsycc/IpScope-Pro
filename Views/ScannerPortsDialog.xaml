@@ -1,0 +1,101 @@
+<Window x:Class="IpScopePro.Views.ScannerPortsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="clr-namespace:IpScopePro.Converters"
+        Title="{converters:Translate Key=SelectPortsTitle}" Height="540" Width="580"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        WindowStyle="None" AllowsTransparency="True"
+        Background="{DynamicResource WindowBg}" Foreground="{DynamicResource WindowFg}"
+        FontFamily="Segoe UI" FontSize="12">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="40" ResizeBorderThickness="0"
+                       GlassFrameThickness="0" CornerRadius="12" />
+    </WindowChrome.WindowChrome>
+
+    <Border CornerRadius="12" Background="{DynamicResource WindowBg}"
+            BorderBrush="{DynamicResource BorderColor}" BorderThickness="1">
+        <Border.Effect>
+            <DropShadowEffect ShadowDepth="4" BlurRadius="16" Opacity="0.3" />
+        </Border.Effect>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Background="{DynamicResource TitleBarBg}" CornerRadius="12,12,0,0"
+                    MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <TextBlock Text="{converters:Translate Key=SelectPortsHeader}" FontSize="13" FontWeight="SemiBold"
+                           Foreground="{DynamicResource WindowFg}" VerticalAlignment="Center" Margin="12,0" />
+            </Border>
+
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="16,10,16,4">
+                <TextBlock Text="{converters:Translate Key=SelectPortsHint}" FontSize="11"
+                           Foreground="{DynamicResource SubtleFg}" VerticalAlignment="Center" />
+                <Button Content="{converters:Translate Key=SelectAllPorts}" MinWidth="90" Height="28"
+                        Style="{DynamicResource FlatButton}" FontSize="11" Padding="8,2" Margin="12,0,0,0"
+                        Foreground="{DynamicResource AccentColor}"
+                        BorderBrush="{DynamicResource BorderColor}" BorderThickness="1"
+                        Click="SelectAll_Click" />
+                <Button Content="{converters:Translate Key=ClearPorts}" MinWidth="90" Height="28"
+                        Style="{DynamicResource FlatButton}" FontSize="11" Padding="8,2" Margin="6,0,0,0"
+                        Foreground="{DynamicResource MutedFg}"
+                        BorderBrush="{DynamicResource BorderColor}" BorderThickness="1"
+                        Click="ClearAll_Click" />
+            </StackPanel>
+
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="16,6,16,6">
+                <ItemsControl x:Name="HostsList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{DynamicResource CardBg}"
+                                    BorderBrush="{DynamicResource BorderColor}" BorderThickness="1"
+                                    CornerRadius="8" Padding="12,10" Margin="0,0,0,10">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding DisplayName}" FontSize="12" FontWeight="Bold"
+                                               Foreground="{DynamicResource WindowFg}" Margin="0,0,0,8"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <CheckBox Content="{converters:Translate Key=PingMonitor}"
+                                              IsChecked="{Binding IncludePing, Mode=TwoWay}"
+                                              Foreground="{DynamicResource SubtleFg}" VerticalAlignment="Center"
+                                              Style="{DynamicResource ThemedCheckBox}" />
+                                    <ItemsControl ItemsSource="{Binding Ports}" Margin="0,6,0,0">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <CheckBox Content="{Binding Display}"
+                                                          IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                          Foreground="{DynamicResource SubtleFg}"
+                                                          VerticalAlignment="Center" Margin="0,2,14,2"
+                                                          FontFamily="Consolas"
+                                                          Style="{DynamicResource ThemedCheckBox}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <Border Grid.Row="3" Padding="14" Background="{DynamicResource TitleBarBg}" CornerRadius="0,0,12,12">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="{converters:Translate Key=Cancel}" MinWidth="90" Height="34"
+                            Style="{DynamicResource FlatButton}" Padding="10,4"
+                            Foreground="{DynamicResource SubtleFg}" FontSize="12" Click="Cancel_Click" />
+                    <Button Content="{converters:Translate Key=AddToProbes}" MinWidth="120" Height="34" Margin="10,0,0,0"
+                            Style="{DynamicResource AccentButton}" Padding="10,4"
+                            FontSize="12" Click="Add_Click" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

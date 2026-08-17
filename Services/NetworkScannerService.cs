@@ -46,7 +46,7 @@ public class NetworkScannerService
     private readonly SemaphoreSlim _portLimiter = new(512);
     private CancellationTokenSource? _cts;
     private static Dictionary<string, string>? _ouiDatabase;
-    private int _lastProgressTick;
+    private long _lastProgressTick;
 
     public event Action<ScanResult>? OnHostFound;
     public event Action<int, int>? OnProgress;
@@ -55,7 +55,7 @@ public class NetworkScannerService
         List<string> ips, bool scanPorts, List<int> ports, ScanMode mode)
     {
         _cts = new CancellationTokenSource();
-        Volatile.Write(ref _lastProgressTick, 0);
+        Interlocked.Exchange(ref _lastProgressTick, 0);
 
         var results = new List<ScanResult>(ips.Count);
         var pingTotal = ips.Count;
@@ -146,8 +146,8 @@ public class NetworkScannerService
 
     private void ReportProgress(int current, int total)
     {
-        var now = Environment.TickCount;
-        var last = Volatile.Read(ref _lastProgressTick);
+        var now = Environment.TickCount64;
+        var last = Interlocked.Read(ref _lastProgressTick);
         if (current < total && now - last < 50) return;
         if (Interlocked.CompareExchange(ref _lastProgressTick, now, last) != last) return;
         OnProgress?.Invoke(current, total);
@@ -190,12 +190,27 @@ public class NetworkScannerService
 
     private static async Task<bool> TryConnect(string ip, int port, int timeoutMs, CancellationToken ct)
     {
+        using var client = new TcpClient();
         try
         {
-            using var client = new TcpClient();
+            // Use the Task-based overload (not the ValueTask one with a cancellation
+            // token) to avoid unobserved SocketException on cancellation/app exit.
+            var connectTask = client.ConnectAsync(ip, port);
+
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             timeoutCts.CancelAfter(timeoutMs);
-            await client.ConnectAsync(ip, port, timeoutCts.Token);
+            var timeoutTask = Task.Delay(Timeout.Infinite, timeoutCts.Token);
+
+            var completed = await Task.WhenAny(connectTask, timeoutTask).ConfigureAwait(false);
+
+            if (completed != connectTask)
+            {
+                client.Dispose();
+                try { await connectTask.ConfigureAwait(false); } catch { }
+                return false;
+            }
+
+            await connectTask.ConfigureAwait(false);
             return true;
         }
         catch

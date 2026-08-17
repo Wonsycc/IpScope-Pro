@@ -27,17 +27,8 @@
 
             <Border Grid.Row="0" Background="{DynamicResource TitleBarBg}" CornerRadius="12,12,0,0"
                     MouseLeftButtonDown="Header_MouseLeftButtonDown">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="{converters:Translate Key=BatchInputHeader}" FontSize="13" FontWeight="SemiBold"
-                               Foreground="{DynamicResource WindowFg}" VerticalAlignment="Center" Margin="12,0" />
-                    <Button Grid.Column="1" Content="✕" Width="36" Height="30"
-                            Style="{DynamicResource FlatButton}"
-                            Foreground="{DynamicResource RedColor}" FontSize="14" Click="Cancel_Click" />
-                </Grid>
+                <TextBlock Text="{converters:Translate Key=BatchInputHeader}" FontSize="13" FontWeight="SemiBold"
+                           Foreground="{DynamicResource WindowFg}" VerticalAlignment="Center" Margin="12,0" />
             </Border>
 
             <StackPanel Grid.Row="1" Margin="16,12">

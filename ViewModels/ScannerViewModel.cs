@@ -79,19 +79,17 @@ public partial class ScannerViewModel : ObservableObject
         var app = Application.Current;
         if (app == null) return;
 
-        try
+        if (app.Dispatcher.CheckAccess())
+        {
+            if (IsScanning) Results.Add(result);
+        }
+        else
         {
             app.Dispatcher.BeginInvoke(() =>
             {
-                try
-                {
-                    if (!IsScanning) return;
-                    Results.Add(result);
-                }
-                catch { }
+                if (IsScanning) Results.Add(result);
             });
         }
-        catch { }
     }
 
     private void HandleProgress(int current, int total)

@@ -165,6 +165,38 @@
         <Setter Property="FontFamily" Value="Segoe UI" />
     </Style>
 
+    <Style x:Key="ThemedRadioButton" TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{StaticResource WindowFg}" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Margin" Value="0,4" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Border x:Name="ring" Width="16" Height="16" CornerRadius="8"
+                                BorderBrush="{StaticResource BorderColor}" BorderThickness="1.5"
+                                VerticalAlignment="Top" Margin="0,2,0,0">
+                            <Ellipse x:Name="dot" Fill="{StaticResource AccentBg}" Margin="3" Opacity="0" />
+                        </Border>
+                        <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Top"
+                                          RecognizesAccessKey="True"
+                                          TextElement.Foreground="{TemplateBinding Foreground}" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="dot" Property="Opacity" Value="1" />
+                            <Setter TargetName="ring" Property="BorderBrush" Value="{StaticResource AccentBg}" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ring" Property="BorderBrush" Value="{StaticResource AccentColor}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="ThemedProgressBar" TargetType="ProgressBar">
         <Setter Property="Height" Value="6" />
         <Setter Property="Foreground" Value="{StaticResource AccentColor}" />
@@ -281,9 +313,11 @@
         <Setter Property="Background" Value="Transparent" />
     </Style>
 
-    <Style x:Key="ModernScrollBar" TargetType="ScrollBar">
-        <Setter Property="Width" Value="5" />
+    <Style TargetType="ScrollBar">
         <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Width" Value="8" />
+        <Setter Property="MinWidth" Value="8" />
+        <Setter Property="Height" Value="Auto" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ScrollBar">
@@ -296,10 +330,10 @@
                                 <RepeatButton Command="ScrollBar.PageDownCommand" Style="{x:Null}" Background="Transparent" Opacity="0" />
                             </Track.IncreaseRepeatButton>
                             <Track.Thumb>
-                                <Thumb x:Name="Thumb" Opacity="0" Cursor="Hand" Width="5">
+                                <Thumb x:Name="Thumb" Opacity="0.55" Cursor="Hand" Margin="1">
                                     <Thumb.Template>
                                         <ControlTemplate TargetType="Thumb">
-                                            <Border Background="{DynamicResource ScrollThumb}" CornerRadius="3" Width="5" />
+                                            <Border Background="{DynamicResource ScrollThumb}" CornerRadius="3" />
                                         </ControlTemplate>
                                     </Thumb.Template>
                                 </Thumb>
@@ -308,12 +342,19 @@
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Thumb" Property="Opacity" Value="0.8" />
+                            <Setter TargetName="Thumb" Property="Opacity" Value="1" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Width" Value="Auto" />
+                <Setter Property="Height" Value="8" />
+                <Setter Property="MinHeight" Value="8" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style TargetType="ToolTip">

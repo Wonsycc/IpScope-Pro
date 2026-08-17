@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 using IpScopePro.Models;
 using IpScopePro.Services;
 using IpScopePro.ViewModels;
@@ -13,6 +14,9 @@ public partial class MainWindow : Window
     private readonly IServiceProvider _services;
     private readonly ThemeService _themeService;
     private readonly ApplicationOptions _options;
+
+    private Rect _restoreBounds = Rect.Empty;
+    private bool _isMaximized;
 
     public MainWindow(MainViewModel viewModel, IServiceProvider services)
     {
@@ -33,6 +37,7 @@ public partial class MainWindow : Window
             });
 
         ScannerViewControl.DataContext = services.GetRequiredService<ScannerViewModel>();
+        AppLogoImage.Source = LoadAppIcon();
         UpdateThemeIcon();
         UpdateScrollViewLabel();
 
@@ -74,6 +79,24 @@ public partial class MainWindow : Window
             : LocalizationService.Instance["Fixed"];
     }
 
+    private static BitmapSource? LoadAppIcon()
+    {
+        try
+        {
+            var uri = new Uri("pack://application:,,,/Resources/app.ico");
+            var info = Application.GetResourceStream(uri);
+            if (info == null) return null;
+
+            using var stream = info.Stream;
+            var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+            return decoder.Frames.OrderByDescending(f => f.PixelWidth).FirstOrDefault();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.ClickCount == 2)
@@ -89,6 +112,18 @@ public partial class MainWindow : Window
 
     private void OnWindowStateChanged(object? sender, EventArgs e)
     {
+        if (WindowState == WindowState.Maximized)
+        {
+            var work = SystemParameters.WorkArea;
+            MaxHeight = work.Height;
+            MaxWidth = work.Width;
+        }
+        else if (WindowState == WindowState.Normal)
+        {
+            MaxHeight = double.PositiveInfinity;
+            MaxWidth = double.PositiveInfinity;
+        }
+
         if (WindowState == WindowState.Minimized && _options.MinimizeToTray)
             Hide();
     }
@@ -112,9 +147,61 @@ public partial class MainWindow : Window
 
     private void Maximize_Click(object sender, RoutedEventArgs e)
     {
-        WindowState = WindowState == WindowState.Maximized
-            ? WindowState.Normal
-            : WindowState.Maximized;
+        if (_isMaximized || WindowState == WindowState.Maximized)
+        {
+            RestoreFromMaximize();
+        }
+        else
+        {
+            MaximizeToWorkArea();
+        }
+    }
+
+    private void MaximizeToWorkArea()
+    {
+        _restoreBounds = new Rect(Left, Top, ActualWidth, ActualHeight);
+
+        var work = GetCurrentMonitorWorkArea();
+
+        MaxHeight = double.PositiveInfinity;
+        MaxWidth = double.PositiveInfinity;
+        WindowState = WindowState.Normal;
+
+        Left = work.Left;
+        Top = work.Top;
+        Width = work.Width;
+        Height = work.Height;
+        _isMaximized = true;
+    }
+
+    private void RestoreFromMaximize()
+    {
+        _isMaximized = false;
+        WindowState = WindowState.Normal;
+
+        if (_restoreBounds != Rect.Empty)
+        {
+            Left = _restoreBounds.Left;
+            Top = _restoreBounds.Top;
+            Width = _restoreBounds.Width;
+            Height = _restoreBounds.Height;
+        }
+    }
+
+    private Rect GetCurrentMonitorWorkArea()
+    {
+        try
+        {
+            var handle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+            if (handle != IntPtr.Zero)
+            {
+                var screen = System.Windows.Forms.Screen.FromHandle(handle);
+                var wa = screen.WorkingArea;
+                return new Rect(wa.Left, wa.Top, wa.Width, wa.Height);
+            }
+        }
+        catch { }
+        return SystemParameters.WorkArea;
     }
 
     private void Close_Click(object sender, RoutedEventArgs e)
