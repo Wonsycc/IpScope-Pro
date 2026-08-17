@@ -106,8 +106,6 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-<<<<<<< Updated upstream
-=======
         if (e.Args.Any(a => a.Equals("--install", StringComparison.OrdinalIgnoreCase)))
         {
             RunHeadlessInstall(e.Args);
@@ -120,7 +118,6 @@ public partial class App : Application
             return;
         }
 
->>>>>>> Stashed changes
         try
         {
             var services = new ServiceCollection();
@@ -151,8 +148,6 @@ public partial class App : Application
             Shutdown();
         }
     }
-<<<<<<< Updated upstream
-=======
 
     private void RunHeadlessInstall(string[] args)
     {
@@ -217,5 +212,4 @@ public partial class App : Application
             Shutdown();
         }
     }
->>>>>>> Stashed changes
 }

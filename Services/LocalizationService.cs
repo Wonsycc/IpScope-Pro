@@ -202,8 +202,6 @@ public class LocalizationService : INotifyPropertyChanged
         ["InstallFailed"] = "Install failed:\n{0}",
         ["UninstallSuccess"] = "IpScope Pro has been uninstalled.",
         ["UninstallFailed"] = "Uninstall failed:\n{0}",
-<<<<<<< Updated upstream
-=======
         ["UninstallConfirm"] = "The program files and shortcuts will be removed.\n\nDo you also want to delete the saved settings and monitors?\n\n[Yes] Delete everything\n[No] Keep my data\n[Cancel] Cancel",
         ["UninstallTitle"] = "Uninstall IpScope Pro",
         ["UninstallWarning"] = "This will remove IpScope Pro from this computer.",
@@ -223,7 +221,6 @@ public class LocalizationService : INotifyPropertyChanged
         ["InstallPathRequired"] = "Please choose an installation directory.",
         ["InstallAdminRequired"] = "Installing to this location requires administrator permissions. Restart the installation with administrator rights?",
         ["InstallHintAdmin"] = "Installing to Program Files requires administrator permissions.",
->>>>>>> Stashed changes
         ["Open"] = "Open",
         ["Exit"] = "Exit",
         ["ExportSettings"] = "Export Settings",
@@ -419,8 +416,6 @@ public class LocalizationService : INotifyPropertyChanged
         ["InstallFailed"] = "Error al instalar:\n{0}",
         ["UninstallSuccess"] = "IpScope Pro se ha desinstalado.",
         ["UninstallFailed"] = "Error al desinstalar:\n{0}",
-<<<<<<< Updated upstream
-=======
         ["UninstallConfirm"] = "Se eliminarán los archivos del programa y los accesos directos.\n\n¿Quieres eliminar también los ajustes y monitores guardados?\n\n[Sí] Eliminar todo\n[No] Conservar mis datos\n[Cancelar] Cancelar",
         ["UninstallTitle"] = "Desinstalar IpScope Pro",
         ["UninstallWarning"] = "Esto eliminará IpScope Pro de este equipo.",
@@ -440,7 +435,6 @@ public class LocalizationService : INotifyPropertyChanged
         ["InstallPathRequired"] = "Elige una carpeta de instalación.",
         ["InstallAdminRequired"] = "La instalación en esta ubicación requiere permisos de administrador. ¿Reiniciar la instalación con permisos de administrador?",
         ["InstallHintAdmin"] = "La instalación en Archivos de programa requiere permisos de administrador.",
->>>>>>> Stashed changes
         ["Open"] = "Abrir",
         ["Exit"] = "Salir",
         ["ExportSettings"] = "Exportar ajustes",

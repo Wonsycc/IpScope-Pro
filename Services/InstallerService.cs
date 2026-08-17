@@ -44,33 +44,32 @@ public class InstallerService
         catch { }
     }
 
-    public async Task<string> InstallAsync()
+    public async Task<string> InstallAsync(string targetDir, bool desktopShortcut, bool startMenuShortcut)
     {
         var exe = Environment.ProcessPath;
         if (string.IsNullOrEmpty(exe))
             throw new InvalidOperationException("Cannot determine current executable path.");
 
+        var installDir = Path.TrimEndingDirectorySeparator(Path.GetFullPath(targetDir));
+
         if (AppEnvironment.IsInstalled)
-            return exe;
+            return Path.Combine(installDir, Path.GetFileName(exe));
 
-        Directory.CreateDirectory(AppEnvironment.InstallDir);
-        await Task.Run(() => CopyDirectory(AppContext.BaseDirectory, AppEnvironment.InstallDir));
+        Directory.CreateDirectory(installDir);
+        EnsureWritable(installDir);
 
-<<<<<<< Updated upstream
-        var installedExe = Path.Combine(AppEnvironment.InstallDir, Path.GetFileName(exe));
-=======
         await Task.Run(() => CopyDirectory(AppContext.BaseDirectory, installDir)).ConfigureAwait(false);
 
         var installedExe = Path.Combine(installDir, Path.GetFileName(exe));
->>>>>>> Stashed changes
 
         using (var key = Registry.CurrentUser.CreateSubKey(AppEnvironment.RegistryRootKey))
-            key.SetValue("InstallDir", AppEnvironment.InstallDir);
+            key.SetValue("InstallDir", installDir);
 
-        CreateShortcut(installedExe,
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Microsoft", "Windows", "Start Menu", "Programs", "IpScopePro.lnk"),
-            "IpScope Pro");
+        if (startMenuShortcut)
+            CreateShortcut(installedExe, StartMenuShortcutPath, "IpScope Pro");
+
+        if (desktopShortcut)
+            CreateShortcut(installedExe, DesktopShortcutPath, "IpScope Pro");
 
         RegisterUninstall(installDir, installedExe);
         RegisterAppPaths(installDir, installedExe);
@@ -78,24 +77,18 @@ public class InstallerService
         return installedExe;
     }
 
-    public void Uninstall()
+    public void Uninstall(bool deleteData)
     {
         SetStartWithWindows(false);
 
+        string? installDir = null;
         try
         {
-            var shortcut = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Microsoft", "Windows", "Start Menu", "Programs", "IpScopePro.lnk");
-            if (File.Exists(shortcut))
-                File.Delete(shortcut);
+            using var key = Registry.CurrentUser.OpenSubKey(AppEnvironment.RegistryRootKey);
+            installDir = key?.GetValue("InstallDir") as string;
         }
         catch { }
 
-<<<<<<< Updated upstream
-        try { Registry.CurrentUser.DeleteSubKey(AppEnvironment.RegistryRootKey, throwOnMissingSubKey: false); }
-        catch { }
-=======
         foreach (var shortcut in new[] { StartMenuShortcutPath, DesktopShortcutPath })
         {
             try
@@ -216,7 +209,6 @@ public class InstallerService
         var test = Path.Combine(dir, ".IpScopeProWriteTest");
         File.WriteAllText(test, string.Empty);
         File.Delete(test);
->>>>>>> Stashed changes
     }
 
     private static void CopyDirectory(string source, string destination)
@@ -246,13 +238,12 @@ public class InstallerService
             shortcut.TargetPath = target;
             shortcut.WorkingDirectory = Path.GetDirectoryName(target);
             shortcut.Description = description;
+            shortcut.IconLocation = target + ",0";
             shortcut.Save();
         }
         catch { }
     }
 
-<<<<<<< Updated upstream
-=======
     public static void RelaunchElevated(string targetDir, bool desktopShortcut, bool startMenuShortcut)
     {
         var exe = Environment.ProcessPath;
@@ -275,7 +266,6 @@ public class InstallerService
         catch { }
     }
 
->>>>>>> Stashed changes
     public static void LaunchInstalled(string installedExe)
     {
         Process.Start(new ProcessStartInfo

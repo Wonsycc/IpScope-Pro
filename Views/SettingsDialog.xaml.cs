@@ -206,13 +206,31 @@ public partial class SettingsDialog : Window
 
     private async void Install_Click(object sender, RoutedEventArgs e)
     {
+        var dialog = new InstallDialog { Owner = this };
+        if (dialog.ShowDialog() != true) return;
+
+        var targetDir = dialog.InstallDirectory;
+        var desktopShortcut = dialog.CreateDesktopShortcut;
+        var startMenuShortcut = dialog.CreateStartMenuShortcut;
+
         try
         {
-            var installedExe = await _installerService.InstallAsync();
+            var installedExe = await _installerService.InstallAsync(targetDir, desktopShortcut, startMenuShortcut);
+            _viewModel.IsInstalled = true;
             MessageBox.Show(LocalizationService.Instance["InstallSuccess"], "IpScope Pro",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             InstallerService.LaunchInstalled(installedExe);
             Application.Current.Shutdown();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            var result = MessageBox.Show(LocalizationService.Instance["InstallAdminRequired"], "IpScope Pro",
+                MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result == MessageBoxResult.Yes)
+            {
+                InstallerService.RelaunchElevated(targetDir, desktopShortcut, startMenuShortcut);
+                Application.Current.Shutdown();
+            }
         }
         catch (Exception ex)
         {
@@ -223,21 +241,19 @@ public partial class SettingsDialog : Window
 
     private void Uninstall_Click(object sender, RoutedEventArgs e)
     {
-<<<<<<< Updated upstream
-=======
         var dialog = new UninstallDialog { Owner = this };
         if (dialog.ShowDialog() != true) return;
 
         var deleteData = dialog.DeleteData;
 
->>>>>>> Stashed changes
         try
         {
-            _installerService.Uninstall();
+            _installerService.Uninstall(deleteData);
             _viewModel.StartWithWindows = false;
             _viewModel.IsInstalled = false;
             MessageBox.Show(LocalizationService.Instance["UninstallSuccess"], "IpScope Pro",
                 MessageBoxButton.OK, MessageBoxImage.Information);
+            Application.Current.Shutdown();
         }
         catch (Exception ex)
         {
